@@ -11,14 +11,19 @@ import (
 	"mygram/routes"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 )
+
+var validate *validator.Validate
 
 func main() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+
+	validate = validator.New(validator.WithRequiredStructEnabled())
 
 	db, err := database.InitDatabase()
 	if err != nil {
@@ -41,6 +46,6 @@ func main() {
 	addr := fmt.Sprintf("%s:%d", serverHost, port)
 
 	r := gin.Default()
-	routes.SetRoutes(r)
+	routes.SetRoutes(r, db)
 	r.Run(addr)
 }

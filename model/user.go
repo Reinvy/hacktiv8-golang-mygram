@@ -9,3 +9,10 @@ type User struct {
 	Password string
 	Age      int
 }
+
+type UserInput struct {
+	Username string
+	Email    string
+	Password string
+	Age      int
+}
