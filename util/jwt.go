@@ -1,7 +1,8 @@
-package helper
+package util
 
 import (
 	"errors"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -17,14 +18,14 @@ func HashMatched(hash []byte, plain []byte) bool {
 	return err == nil
 }
 
-func GenerateJWTToken(isAdmin bool, username string) (string, error) {
+func GenerateJWTToken(isAdmin bool, id uint) (string, error) {
 	claims := jwt.MapClaims{
 		"admin": isAdmin,
-		"sub":   username,
+		"sub":   id,
 		"exp":   time.Now().Add(5 * time.Minute).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte("s4yA_5uka_9074nG"))
+	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }
 
 func GetJWTClaims(tokenString string) (map[string]any, error) {
@@ -34,7 +35,7 @@ func GetJWTClaims(tokenString string) (map[string]any, error) {
 			return nil, errors.New("invalid method")
 		}
 
-		return []byte("s4yA_5uka_9074nG"), nil
+		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 	if err != nil {
 		return nil, err
@@ -48,21 +49,14 @@ func GetJWTClaims(tokenString string) (map[string]any, error) {
 	if !ok {
 		return nil, errors.New("invalid claims")
 	}
-
 	return claims, nil
 }
 
-func GetSubFromClaims(claims any) (any, error) {
-
-	mapClaims, ok := claims.(map[string]any)
+func GetSubFromClaims(claims map[string]any) (uint, error) {
+	sub, ok := claims["sub"].(float64)
 	if !ok {
-		return nil, errors.New("not map")
+		return 0, errors.New("invalid sub")
 	}
 
-	sub, ok := mapClaims["sub"]
-	if !ok {
-		return nil, errors.New("not found")
-	}
-
-	return sub, nil
+	return uint(sub), nil
 }

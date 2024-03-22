@@ -7,15 +7,12 @@ import (
 	"strconv"
 
 	"mygram/database"
-	"mygram/model"
+	"mygram/model/entity"
 	"mygram/routes"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 )
-
-var validate *validator.Validate
 
 func main() {
 	err := godotenv.Load()
@@ -23,14 +20,12 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	validate = validator.New(validator.WithRequiredStructEnabled())
-
 	db, err := database.InitDatabase()
 	if err != nil {
 		panic(err)
 	}
 
-	err = db.AutoMigrate(&model.User{}, &model.Photo{}, &model.Comment{}, &model.SocialMedia{})
+	err = db.AutoMigrate(&entity.User{}, &entity.Photo{}, &entity.Comment{}, &entity.SocialMedia{})
 	if err != nil {
 		panic(err)
 	}

@@ -1,112 +1,249 @@
 package controller
 
 import (
-	"mygram/helper"
-	"mygram/model"
-	"mygram/repository"
+	"mygram/model/dto"
+	"mygram/model/entity"
+	"mygram/model/repository"
+	"mygram/util"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type userController struct {
 	userRepository repository.IUserRepository
 }
 
-func NewUserController(userRepository repository.IUserRepository) *userController {
+func NewUserController(db *gorm.DB) *userController {
 	return &userController{
-		userRepository: userRepository,
+		userRepository: repository.NewUserRepository(db),
 	}
 }
 
 func (uc *userController) Login(c *gin.Context) {
-
-	var requestedUser model.User
-	err := c.ShouldBindJSON(&requestedUser)
+	var userLogin dto.UserLogin
+	err := c.ShouldBindJSON(&userLogin)
 	if err != nil {
-		var r model.Response = model.Response{
-			Success: false,
-			Error:   err.Error(),
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: err.Error(),
 		}
-		c.AbortWithStatusJSON(http.StatusInternalServerError, r)
+		c.AbortWithStatusJSON(http.StatusBadRequest, r)
 		return
 	}
 
-	user, err := uc.userRepository.GetByUsername(requestedUser.Username)
+	user, err := uc.userRepository.GetByUsername(userLogin.Username)
 	if err != nil {
-		var r model.Response = model.Response{
-			Success: false,
-			Error:   err.Error(),
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: err.Error(),
 		}
-		c.AbortWithStatusJSON(http.StatusInternalServerError, r)
+		c.AbortWithStatusJSON(http.StatusBadRequest, r)
 		return
 	}
 
-	if !helper.HashMatched([]byte(user.Password), []byte(requestedUser.Password)) {
-		var r model.Response = model.Response{
-			Success: false,
-			Error:   err.Error(),
+	if !util.HashMatched([]byte(user.Password), []byte(userLogin.Password)) {
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: "Wrong password",
 		}
-		c.AbortWithStatusJSON(http.StatusInternalServerError, r)
+		c.AbortWithStatusJSON(http.StatusBadRequest, r)
 		return
 	}
 
-	token, err := helper.GenerateJWTToken(true, user.Username)
+	token, err := util.GenerateJWTToken(true, user.ID)
 	if err != nil {
-		var r model.Response = model.Response{
-			Success: false,
-			Error:   err.Error(),
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: err.Error(),
 		}
 		c.AbortWithStatusJSON(http.StatusInternalServerError, r)
 		return
 	}
 
-	c.JSON(http.StatusOK, helper.CreateResponse(true, gin.H{
-		"token": token,
-	}, ""))
+	var r dto.Response = dto.Response{
+		Status:  "Success",
+		Message: "Login success",
+		Data: gin.H{
+			"token": token,
+		},
+	}
+	c.AbortWithStatusJSON(http.StatusOK, r)
+
 }
 
 func (uc *userController) Register(c *gin.Context) {
-	var userInput model.UserInput
-	var newUser model.User
+	var userInput dto.UserRegister
+	var newUser entity.User
 
 	err := c.ShouldBindJSON(&userInput)
 	if err != nil {
-		var r model.Response = model.Response{
-			Success: false,
-			Error:   err.Error(),
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: strings.Split(err.Error(), "Error:")[1],
 		}
-		c.AbortWithStatusJSON(http.StatusInternalServerError, r)
+		c.AbortWithStatusJSON(http.StatusBadRequest, r)
 		return
 	}
 
-	hashedPassword, err := helper.Hash([]byte(userInput.Password))
+	hashedPassword, err := util.Hash([]byte(userInput.Password))
 	if err != nil {
-		var r model.Response = model.Response{
-			Success: false,
-			Error:   err.Error(),
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: err.Error(),
 		}
 		c.AbortWithStatusJSON(http.StatusInternalServerError, r)
 		return
 	}
 
-	newUser.Username = userInput.Username
-	newUser.Email = userInput.Email
-	newUser.Age = userInput.Age
-	newUser.Password = string(hashedPassword)
+	userInput.Password = string(hashedPassword)
+	newUser = userInput.ToEntity()
 
 	user, err := uc.userRepository.Create(newUser)
 	if err != nil {
-		var r model.Response = model.Response{
-			Success: false,
-			Error:   err.Error(),
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: strings.Split(err.Error(), "ERROR: ")[1],
 		}
 		c.AbortWithStatusJSON(http.StatusInternalServerError, r)
 		return
 	}
 
-	c.JSON(http.StatusCreated, helper.CreateResponse(true, gin.H{
-		"id": user.ID,
-	}, ""))
+	var userResponse dto.UserResponse
+	userResponse.FromEntity(user)
+
+	var r dto.Response = dto.Response{
+		Status:  "Success",
+		Message: "User created successfully",
+		Data:    userResponse,
+	}
+	c.AbortWithStatusJSON(http.StatusCreated, r)
+
+}
+
+func (uc *userController) Update(c *gin.Context) {
+	token := c.GetHeader("Authorization")
+	paramsId := c.Param("id")
+	userInput := dto.UserUpdate{}
+
+	id, _ := strconv.ParseUint(paramsId, 10, 64)
+
+	err := c.ShouldBindJSON(&userInput)
+	if err != nil {
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: err.Error(),
+		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, r)
+		return
+	}
+
+	user, err := uc.userRepository.GetById(uint(id))
+	if err != nil {
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: err.Error(),
+		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, r)
+		return
+	}
+
+	claims, _ := util.GetJWTClaims(strings.Split(token, " ")[1])
+	userID, err := util.GetSubFromClaims(claims)
+	if err != nil {
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: err.Error(),
+		}
+		c.AbortWithStatusJSON(http.StatusUnauthorized, r)
+		return
+	}
+
+	if uint(id) != userID {
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: "Unauthorized",
+		}
+		c.AbortWithStatusJSON(http.StatusUnauthorized, r)
+		return
+	}
+
+	user.Username = userInput.Username
+	user.Email = userInput.Email
+
+	updatedUser, err := uc.userRepository.Update(user)
+	if err != nil {
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: err.Error(),
+		}
+		c.AbortWithStatusJSON(http.StatusInternalServerError, r)
+		return
+	}
+
+	var userResponse dto.UserResponse
+	userResponse.FromEntity(updatedUser)
+
+	var r dto.Response = dto.Response{
+		Status:  "Success",
+		Message: "User updated successfully",
+		Data:    userResponse,
+	}
+	c.AbortWithStatusJSON(http.StatusOK, r)
+}
+
+func (uc *userController) Delete(c *gin.Context) {
+	token := c.GetHeader("Authorization")
+	paramsId := c.Param("id")
+	id, _ := strconv.ParseUint(paramsId, 10, 64)
+
+	claims, _ := util.GetJWTClaims(strings.Split(token, " ")[1])
+	userID, err := util.GetSubFromClaims(claims)
+	if err != nil {
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: err.Error(),
+		}
+		c.AbortWithStatusJSON(http.StatusUnauthorized, r)
+		return
+	}
+
+	if uint(id) != userID {
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: "Unauthorized",
+		}
+		c.AbortWithStatusJSON(http.StatusUnauthorized, r)
+		return
+	}
+
+	user, err := uc.userRepository.GetById(uint(id))
+	if err != nil {
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: err.Error(),
+		}
+		c.AbortWithStatusJSON(http.StatusNotFound, r)
+		return
+	}
+
+	_, err = uc.userRepository.Delete(user)
+	if err != nil {
+		var r dto.Response = dto.Response{
+			Status:  "Error",
+			Message: err.Error(),
+		}
+		c.AbortWithStatusJSON(http.StatusInternalServerError, r)
+		return
+	}
+
+	var r dto.Response = dto.Response{
+		Status:  "Success",
+		Message: "User deleted successfully",
+	}
+	c.AbortWithStatusJSON(http.StatusOK, r)
 
 }

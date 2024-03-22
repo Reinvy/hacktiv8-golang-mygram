@@ -9,6 +9,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var db *gorm.DB
+
 func InitDatabase() (*gorm.DB, error) {
 	dbHost := os.Getenv("DB_HOST")
 	dbUser := os.Getenv("DB_USER")
@@ -23,4 +25,8 @@ func InitDatabase() (*gorm.DB, error) {
 
 	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", dbHost, port, dbUser, dbPassword, dbName)
 	return gorm.Open(postgres.Open(connectionString), &gorm.Config{})
+}
+
+func GetDB() *gorm.DB {
+	return db
 }
