@@ -1,9 +1,9 @@
-package controller
+package service
 
 import (
-	"mygram/model/dto"
-	"mygram/model/entity"
-	"mygram/model/repository"
+	"mygram/domain/dto"
+	"mygram/domain/entity"
+	"mygram/domain/repository"
 	"mygram/util"
 	"net/http"
 	"strconv"
@@ -13,17 +13,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type photoController struct {
+type photoService struct {
 	photoRepository repository.IPhotoRepository
 }
 
-func NewPhotoController(db *gorm.DB) *photoController {
-	return &photoController{
+func NewPhotoService(db *gorm.DB) *photoService {
+	return &photoService{
 		photoRepository: repository.NewPhotoRepository(db),
 	}
 }
 
-func (pc *photoController) Create(c *gin.Context) {
+func (pc *photoService) Create(c *gin.Context) {
 	var photoRequest dto.PhotoRequest
 	var newPhoto entity.Photo
 
@@ -67,7 +67,7 @@ func (pc *photoController) Create(c *gin.Context) {
 
 }
 
-func (pc *photoController) GetAll(c *gin.Context) {
+func (pc *photoService) GetAll(c *gin.Context) {
 	photos, err := pc.photoRepository.GetAll()
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, dto.Response{
@@ -93,7 +93,7 @@ func (pc *photoController) GetAll(c *gin.Context) {
 	c.AbortWithStatusJSON(http.StatusOK, r)
 }
 
-func (pc *photoController) GetPhotoByID(c *gin.Context) {
+func (pc *photoService) GetPhotoByID(c *gin.Context) {
 	StringId := c.Param("id")
 
 	id, err := strconv.ParseUint(StringId, 10, 64)
@@ -126,7 +126,7 @@ func (pc *photoController) GetPhotoByID(c *gin.Context) {
 	c.AbortWithStatusJSON(http.StatusOK, r)
 }
 
-func (pc *photoController) Update(c *gin.Context) {
+func (pc *photoService) Update(c *gin.Context) {
 	token := c.GetHeader("Authorization")
 	paramsId := c.Param("id")
 	var photoRequest dto.PhotoRequest
@@ -201,7 +201,7 @@ func (pc *photoController) Update(c *gin.Context) {
 	c.AbortWithStatusJSON(http.StatusOK, r)
 }
 
-func (pc *photoController) Delete(c *gin.Context) {
+func (pc *photoService) Delete(c *gin.Context) {
 	token := c.GetHeader("Authorization")
 	paramsId := c.Param("id")
 	id, _ := strconv.ParseUint(paramsId, 10, 64)

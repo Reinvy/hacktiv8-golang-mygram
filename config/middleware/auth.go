@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"mygram/model/dto"
+	"mygram/domain/dto"
 	"mygram/util"
 	"net/http"
 

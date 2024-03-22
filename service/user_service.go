@@ -1,9 +1,9 @@
-package controller
+package service
 
 import (
-	"mygram/model/dto"
-	"mygram/model/entity"
-	"mygram/model/repository"
+	"mygram/domain/dto"
+	"mygram/domain/entity"
+	"mygram/domain/repository"
 	"mygram/util"
 	"net/http"
 	"strconv"
@@ -13,17 +13,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type userController struct {
+type userService struct {
 	userRepository repository.IUserRepository
 }
 
-func NewUserController(db *gorm.DB) *userController {
-	return &userController{
+func NewUserService(db *gorm.DB) *userService {
+	return &userService{
 		userRepository: repository.NewUserRepository(db),
 	}
 }
 
-func (uc *userController) Login(c *gin.Context) {
+func (uc *userService) Login(c *gin.Context) {
 	var userLogin dto.UserLogin
 	err := c.ShouldBindJSON(&userLogin)
 	if err != nil {
@@ -75,7 +75,7 @@ func (uc *userController) Login(c *gin.Context) {
 
 }
 
-func (uc *userController) Register(c *gin.Context) {
+func (uc *userService) Register(c *gin.Context) {
 	var userInput dto.UserRegister
 	var newUser entity.User
 
@@ -124,7 +124,7 @@ func (uc *userController) Register(c *gin.Context) {
 
 }
 
-func (uc *userController) Update(c *gin.Context) {
+func (uc *userService) Update(c *gin.Context) {
 	token := c.GetHeader("Authorization")
 	paramsId := c.Param("id")
 	userInput := dto.UserUpdate{}
@@ -195,7 +195,7 @@ func (uc *userController) Update(c *gin.Context) {
 	c.AbortWithStatusJSON(http.StatusOK, r)
 }
 
-func (uc *userController) Delete(c *gin.Context) {
+func (uc *userService) Delete(c *gin.Context) {
 	token := c.GetHeader("Authorization")
 	paramsId := c.Param("id")
 	id, _ := strconv.ParseUint(paramsId, 10, 64)

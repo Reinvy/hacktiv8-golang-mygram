@@ -1,9 +1,9 @@
-package controller
+package service
 
 import (
-	"mygram/model/dto"
-	"mygram/model/entity"
-	"mygram/model/repository"
+	"mygram/domain/dto"
+	"mygram/domain/entity"
+	"mygram/domain/repository"
 	"mygram/util"
 	"net/http"
 	"strings"
@@ -12,17 +12,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type commentController struct {
+type commentService struct {
 	commentRepository repository.ICommentRepository
 }
 
-func NewCommentController(db *gorm.DB) *commentController {
-	return &commentController{
+func NewCommentService(db *gorm.DB) *commentService {
+	return &commentService{
 		commentRepository: repository.NewCommentRepository(db),
 	}
 }
 
-func (cc *commentController) Create(c *gin.Context) {
+func (cc *commentService) Create(c *gin.Context) {
 	var commentRequest dto.CommentRequest
 	var newComment entity.Comment
 
@@ -64,7 +64,7 @@ func (cc *commentController) Create(c *gin.Context) {
 
 }
 
-func (cc *commentController) GetAll(c *gin.Context) {
+func (cc *commentService) GetAll(c *gin.Context) {
 	comments, err := cc.commentRepository.GetAll()
 	if err != nil {
 		var r dto.Response = dto.Response{

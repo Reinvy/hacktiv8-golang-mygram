@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"mygram/model/entity"
+	"mygram/domain/entity"
 
 	"gorm.io/gorm"
 )

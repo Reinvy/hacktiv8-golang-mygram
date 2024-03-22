@@ -1,37 +1,37 @@
 package routes
 
 import (
-	"mygram/controller"
-	"mygram/middleware"
+	"mygram/config/middleware"
+	"mygram/service"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 func SetRoutes(g *gin.Engine, db *gorm.DB) {
-	userController := controller.NewUserController(db)
-	photoController := controller.NewPhotoController(db)
-	commentController := controller.NewCommentController(db)
+	userSerrvice := service.NewUserService(db)
+	photoService := service.NewPhotoService(db)
+	commentService := service.NewCommentService(db)
 
 	api := g.Group("api/v1")
-	api.POST("/login", userController.Login)
-	api.POST("/register", userController.Register)
+	api.POST("/login", userSerrvice.Login)
+	api.POST("/register", userSerrvice.Register)
 
 	userApi := api.Group("users", middleware.AuthMiddleware)
-	userApi.PUT("/:id", userController.Update)
-	userApi.DELETE("/:id", userController.Delete)
+	userApi.PUT("/:id", userSerrvice.Update)
+	userApi.DELETE("/:id", userSerrvice.Delete)
 
 	photoApi := api.Group("photos", middleware.AuthMiddleware)
-	photoApi.GET("/", photoController.GetAll)
-	photoApi.GET("/:id", photoController.GetPhotoByID)
-	photoApi.POST("/", photoController.Create)
-	photoApi.PUT("/:id", photoController.Update)
-	photoApi.DELETE("/:id", photoController.Delete)
+	photoApi.GET("/", photoService.GetAll)
+	photoApi.GET("/:id", photoService.GetPhotoByID)
+	photoApi.POST("/", photoService.Create)
+	photoApi.PUT("/:id", photoService.Update)
+	photoApi.DELETE("/:id", photoService.Delete)
 
 	commentApi := api.Group("comments", middleware.AuthMiddleware)
-	// commentApi.GET("/", commentController.GetAll)
-	commentApi.POST("/", commentController.Create)
-	// commentApi.PUT("/:id", commentController.Update)
-	// commentApi.DELETE("/:id", commentController.Delete)
+	// commentApi.GET("/", commentService.GetAll)
+	commentApi.POST("/", commentService.Create)
+	// commentApi.PUT("/:id", commentService.Update)
+	// commentApi.DELETE("/:id", commentService.Delete)
 
 }

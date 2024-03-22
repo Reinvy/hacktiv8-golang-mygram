@@ -6,8 +6,8 @@ import (
 	"os"
 	"strconv"
 
-	"mygram/database"
-	"mygram/model/entity"
+	"mygram/config/database"
+	"mygram/domain/entity"
 	"mygram/routes"
 
 	"github.com/gin-gonic/gin"

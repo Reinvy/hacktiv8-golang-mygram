@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"mygram/model/entity"
+	"mygram/domain/entity"
 	"time"
 )
 
