@@ -3,6 +3,7 @@ package util
 import (
 	"errors"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -22,14 +23,16 @@ func GenerateJWTToken(isAdmin bool, id uint) (string, error) {
 	claims := jwt.MapClaims{
 		"admin": isAdmin,
 		"sub":   id,
-		"exp":   time.Now().Add(5 * time.Minute).Unix(),
+		"exp":   time.Now().Add(60 * time.Minute).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }
 
-func GetJWTClaims(tokenString string) (map[string]any, error) {
-	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+func GetJWTClaims(bearerToken string) (map[string]any, error) {
+	splittedValue := strings.Split(bearerToken, "Bearer ")
+	stringToken := splittedValue[1]
+	token, err := jwt.Parse(stringToken, func(t *jwt.Token) (interface{}, error) {
 		_, ok := t.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
 			return nil, errors.New("invalid method")

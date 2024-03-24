@@ -20,8 +20,8 @@ type UserResponse struct {
 }
 
 type UserLogin struct {
-	Username string `binding:"required"`
-	Password string `binding:"required"`
+	Email    string `binding:"required,email"`
+	Password string `binding:"required,min=6"`
 }
 
 type UserRegister struct {

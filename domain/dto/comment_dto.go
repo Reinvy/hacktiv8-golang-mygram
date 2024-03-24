@@ -11,19 +11,23 @@ type CommentDTO interface {
 }
 
 type CommentResponse struct {
-	ID        uint          `gorm:"primaryKey" json:"id"`
-	Message   string        `json:"message"`
-	UserID    uint          `json:"user_id"`
-	PhotoID   uint          `json:"photo_id"`
-	CreatedAt time.Time     `json:"created_at"`
-	UpdatedAt time.Time     `json:"updated_at"`
-	User      UserResponse  `json:"user"`
-	Photo     PhotoResponse `json:"photo"`
+	ID        uint                     `gorm:"primaryKey" json:"id"`
+	Message   string                   `json:"message"`
+	UserID    uint                     `json:"user_id"`
+	PhotoID   uint                     `json:"photo_id"`
+	CreatedAt time.Time                `json:"created_at"`
+	UpdatedAt time.Time                `json:"updated_at"`
+	User      UserResponse             `json:"user"`
+	Photo     PhotoResponseWithOutUser `json:"photo"`
 }
 
-type CommentRequest struct {
+type CommentPost struct {
 	Message string `json:"message" binding:"required"`
 	PhotoID uint   `json:"photo_id" binding:"required"`
+}
+
+type CommentPut struct {
+	Message string `json:"message" binding:"required"`
 }
 
 func (cr *CommentResponse) FromEntity(comment entity.Comment) {
@@ -49,7 +53,7 @@ func (cr *CommentResponse) ToEntity() entity.Comment {
 	}
 }
 
-func (cr *CommentRequest) ToEntity() entity.Comment {
+func (cr *CommentPost) ToEntity() entity.Comment {
 	return entity.Comment{
 		Message: cr.Message,
 		PhotoID: cr.PhotoID,

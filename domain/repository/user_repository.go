@@ -6,16 +6,15 @@ import (
 	"gorm.io/gorm"
 )
 
-// IUserRepository
 type IUserRepository interface {
 	Create(entity.User) (entity.User, error)
 	Update(entity.User) (entity.User, error)
 	Delete(entity.User) (entity.User, error)
 	GetByUsername(string) (entity.User, error)
+	GetByEmail(string) (entity.User, error)
 	GetById(uint) (entity.User, error)
 }
 
-// userRepository
 type UserRepository struct {
 	db *gorm.DB
 }
@@ -33,6 +32,12 @@ func (ur *UserRepository) Create(newUser entity.User) (entity.User, error) {
 func (ur *UserRepository) GetByUsername(username string) (entity.User, error) {
 	var user entity.User
 	tx := ur.db.First(&user, "username = ?", username)
+	return user, tx.Error
+}
+
+func (ur *UserRepository) GetByEmail(email string) (entity.User, error) {
+	var user entity.User
+	tx := ur.db.First(&user, "email = ?", email)
 	return user, tx.Error
 }
 

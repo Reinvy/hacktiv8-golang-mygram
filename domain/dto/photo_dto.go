@@ -21,6 +21,16 @@ type PhotoResponse struct {
 	UpdatedAt time.Time    `json:"updated_at"`
 }
 
+type PhotoResponseWithOutUser struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Title     string    `json:"title"`
+	Caption   string    `json:"caption"`
+	PhotoUrl  string    `json:"photo_url"`
+	UserID    uint      `json:"user_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 func (pr *PhotoResponse) FromEntity(photo entity.Photo) {
 	pr.ID = photo.ID
 	pr.Title = photo.Title
@@ -55,5 +65,27 @@ func (pr *PhotoRequest) ToEntity() entity.Photo {
 		Title:    pr.Title,
 		Caption:  pr.Caption,
 		PhotoUrl: pr.PhotoUrl,
+	}
+}
+
+func (pr *PhotoResponseWithOutUser) FromEntity(photo entity.Photo) {
+	pr.ID = photo.ID
+	pr.Title = photo.Title
+	pr.Caption = photo.Caption
+	pr.PhotoUrl = photo.PhotoUrl
+	pr.UserID = photo.UserID
+	pr.CreatedAt = photo.CreatedAt
+	pr.UpdatedAt = photo.UpdatedAt
+}
+
+func (pr *PhotoResponseWithOutUser) ToEntity() entity.Photo {
+	return entity.Photo{
+		ID:        pr.ID,
+		Title:     pr.Title,
+		Caption:   pr.Caption,
+		PhotoUrl:  pr.PhotoUrl,
+		UserID:    pr.UserID,
+		CreatedAt: pr.CreatedAt,
+		UpdatedAt: pr.UpdatedAt,
 	}
 }

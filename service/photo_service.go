@@ -7,7 +7,6 @@ import (
 	"mygram/util"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -24,6 +23,7 @@ func NewPhotoService(db *gorm.DB) *photoService {
 }
 
 func (pc *photoService) Create(c *gin.Context) {
+	token := c.GetHeader("Authorization")
 	var photoRequest dto.PhotoRequest
 	var newPhoto entity.Photo
 
@@ -35,7 +35,7 @@ func (pc *photoService) Create(c *gin.Context) {
 		})
 		return
 	}
-	claims, _ := util.GetJWTClaims(strings.Split(c.GetHeader("Authorization"), " ")[1])
+	claims, _ := util.GetJWTClaims(token)
 	userID, _ := util.GetSubFromClaims(claims)
 
 	newPhoto = photoRequest.ToEntity()
@@ -152,7 +152,7 @@ func (pc *photoService) Update(c *gin.Context) {
 		return
 	}
 
-	claims, _ := util.GetJWTClaims(strings.Split(token, " ")[1])
+	claims, _ := util.GetJWTClaims(token)
 	userID, err := util.GetSubFromClaims(claims)
 	if err != nil {
 		var r dto.Response = dto.Response{
@@ -205,7 +205,7 @@ func (pc *photoService) Delete(c *gin.Context) {
 	token := c.GetHeader("Authorization")
 	paramsId := c.Param("id")
 	id, _ := strconv.ParseUint(paramsId, 10, 64)
-	claims, _ := util.GetJWTClaims(strings.Split(token, " ")[1])
+	claims, _ := util.GetJWTClaims(token)
 	userID, err := util.GetSubFromClaims(claims)
 	if err != nil {
 		var r dto.Response = dto.Response{

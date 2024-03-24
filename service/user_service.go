@@ -35,7 +35,7 @@ func (uc *userService) Login(c *gin.Context) {
 		return
 	}
 
-	user, err := uc.userRepository.GetByUsername(userLogin.Username)
+	user, err := uc.userRepository.GetByEmail(userLogin.Email)
 	if err != nil {
 		var r dto.Response = dto.Response{
 			Status:  "Error",
@@ -83,7 +83,7 @@ func (uc *userService) Register(c *gin.Context) {
 	if err != nil {
 		var r dto.Response = dto.Response{
 			Status:  "Error",
-			Message: strings.Split(err.Error(), "Error:")[1],
+			Message: err.Error(),
 		}
 		c.AbortWithStatusJSON(http.StatusBadRequest, r)
 		return
@@ -151,7 +151,7 @@ func (uc *userService) Update(c *gin.Context) {
 		return
 	}
 
-	claims, _ := util.GetJWTClaims(strings.Split(token, " ")[1])
+	claims, _ := util.GetJWTClaims(token)
 	userID, err := util.GetSubFromClaims(claims)
 	if err != nil {
 		var r dto.Response = dto.Response{
@@ -200,7 +200,7 @@ func (uc *userService) Delete(c *gin.Context) {
 	paramsId := c.Param("id")
 	id, _ := strconv.ParseUint(paramsId, 10, 64)
 
-	claims, _ := util.GetJWTClaims(strings.Split(token, " ")[1])
+	claims, _ := util.GetJWTClaims(token)
 	userID, err := util.GetSubFromClaims(claims)
 	if err != nil {
 		var r dto.Response = dto.Response{
