@@ -47,6 +47,13 @@ func (pr *PhotoRepository) Update(photo entity.Photo) (entity.Photo, error) {
 }
 
 func (pr *PhotoRepository) Delete(photo entity.Photo) (entity.Photo, error) {
-	tx := pr.db.Delete(&photo)
+	// Delete all comments for a photo
+	tx := pr.db.Where("photo_id = ?", photo.ID).Delete(&entity.Comment{})
+	if tx.Error != nil {
+		return photo, tx.Error
+	}
+
+	// Delete Photo
+	tx = pr.db.Delete(&photo)
 	return photo, tx.Error
 }
