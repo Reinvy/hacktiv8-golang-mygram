@@ -53,6 +53,39 @@ func (ur *UserRepository) Update(user entity.User) (entity.User, error) {
 }
 
 func (ur *UserRepository) Delete(user entity.User) (entity.User, error) {
-	tx := ur.db.Delete(&user)
+	var photos []entity.Photo
+
+	tx := ur.db.Where("user_id = ?", user.ID).Delete(&entity.Comment{})
+	if tx.Error != nil {
+		return user, tx.Error
+	}
+
+	tx = ur.db.Where("user_id = ?", user.ID).Find(&photos)
+	if tx.Error != nil {
+		return user, tx.Error
+	}
+	for _, photo := range photos {
+		tx = ur.db.Where("photo_id = ?", photo.ID).Delete(&entity.Comment{})
+		if tx.Error != nil {
+			return user, tx.Error
+		}
+	}
+
+	tx = ur.db.Where("photo_id = ?", user.ID).Delete(&entity.Comment{})
+	if tx.Error != nil {
+		return user, tx.Error
+	}
+
+	tx = ur.db.Where("user_id = ?", user.ID).Delete(&entity.Photo{})
+	if tx.Error != nil {
+		return user, tx.Error
+	}
+
+	tx = ur.db.Where("user_id = ?", user.ID).Delete(&entity.SocialMedia{})
+	if tx.Error != nil {
+		return user, tx.Error
+	}
+
+	tx = ur.db.Delete(&user)
 	return user, tx.Error
 }
